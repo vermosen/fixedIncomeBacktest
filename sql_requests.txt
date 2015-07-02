@@ -1,0 +1,7 @@
+# instrument table creation
+CREATE TABLE `fixedIncomeBacktest`.`table_instrument` (
+  `instrument_id` BIGINT NOT NULL AUTO_INCREMENT,
+  `instrument_isin` VARCHAR(12) NOT NULL COMMENT 'instrument isin code',
+  `instrument_issue_date` DATE NOT NULL,
+  PRIMARY KEY (`instrument_id`),
+  UNIQUE INDEX `instrument_isin_UNIQUE` (`instrument_isin` ASC));
