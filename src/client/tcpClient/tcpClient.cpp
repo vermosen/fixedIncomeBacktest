@@ -10,7 +10,7 @@
 
 tcpClient::tcpClient(
 	boost::asio::io_service& ios,
-	boost::shared_ptr<scrolledLogWindow> scroll)
+	scrolledLogWindow& scroll)
 
 	: m_closing		(false),
 	  m_connected	(false),
@@ -19,9 +19,6 @@ tcpClient::tcpClient(
 	  m_scroll		(scroll) {}
 
 void tcpClient::connect(boost::asio::ip::tcp::endpoint& endpoint) {
-
-	m_scroll->append("connection attempt with server: ");
-	m_scroll->append(endpoint.address().to_string());
 
 	m_connection = tcpConnection::create(m_ios);
 	m_connection->socket().async_connect(endpoint,
@@ -49,13 +46,13 @@ void tcpClient::deliver(const sqlLogin& conn) {
 
 };
 
-void tcpClient::read() {									// wait for incoming message
+void tcpClient::read_message() {							// wait for incoming message
 
 	if(!m_connected || m_closing) return;
 
 	m_connection->async_read(m_message,						// wait for a new message
 		boost::bind(
-			&tcpClient::handle_read,
+			&tcpClient::handle_read_message,
 			shared_from_this(),
 			boost::asio::placeholders::error));
 
@@ -68,18 +65,17 @@ void tcpClient::handle_connect(const boost::system::error_code& error) {
 	if(!error) {
 
 		m_connected = true;
-		m_scroll->append("connection to the server was successfull");
-		read();
+		m_scroll.append("connection to the server was successfull");
+		read_message();
 
 	}
 
 };
-void tcpClient::handle_read(const boost::system::error_code& error) {
+void tcpClient::handle_read_message(const boost::system::error_code& error) {
 
 	if (!error && !m_closing) {
 
-		m_scroll->append("client received a message from the server: ");
-		m_scroll->append(m_message.m_body);
+		m_scroll.append("server replied: " + m_message.m_body);
 
 	}
 };

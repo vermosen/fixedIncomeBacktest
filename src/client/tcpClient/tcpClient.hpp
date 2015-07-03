@@ -22,7 +22,7 @@
 class tcpClient : public boost::enable_shared_from_this<tcpClient> {
 
 public:
-	tcpClient(boost::asio::io_service&, boost::shared_ptr<scrolledLogWindow>);
+	tcpClient(boost::asio::io_service&, scrolledLogWindow&);
 
 	void connect(boost::asio::ip::tcp::endpoint&);
 
@@ -32,22 +32,23 @@ public:
 private:
 	// callbacks
 	void handle_connect			(const boost::system::error_code& error);
-	void handle_read			(const boost::system::error_code& error);
+	void handle_read_message	(const boost::system::error_code& error);
 	void handle_write_message	(const boost::system::error_code& error);
 	void handle_write_sql_login	(const boost::system::error_code& error);
 
-	void read();
+	void read_message();
 
-	bool	m_closing	;											// booleans
-	bool	m_connected	;
+	bool	m_closing	;											// is closing ?
+	bool	m_connected	;											// is connected ?
 
 	boost::asio::io_service&			m_ios		;				// asio components
 	boost::asio::deadline_timer 		m_timer		;
-	boost::shared_ptr<tcpConnection> 	m_connection;
 
-	boost::shared_ptr<scrolledLogWindow> m_scroll	;				// shared objects
+	boost::shared_ptr<tcpConnection> 	m_connection;				// shared objects
 
-	message								m_message	;				// message returned
+	scrolledLogWindow& m_scroll;
+
+	message								m_message	;				// message i/o
 	sqlLogin							m_sqlLogin	;
 
 };

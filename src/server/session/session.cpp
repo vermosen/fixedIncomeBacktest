@@ -7,6 +7,19 @@
 
 #include <server/session/session.hpp>
 
+boost::shared_ptr<session> session::create(
+	boost::shared_ptr<tcpConnection> connection_,
+	tcpServer & server_) {
+
+	boost::shared_ptr<session> m_session(new session(connection_, server_));
+
+	m_session->wait_for_msg();
+	//m_session->wait_for_database_login();
+
+	return m_session;
+
+}
+
 void session::deliver(const message& msg) {
 
 	m_connection->async_write(msg,
@@ -57,9 +70,11 @@ void session::handle_read_msg(const boost::system::error_code &error) {
 			<< m_message.m_body
 			<< std::endl;
 
-		databaseRequest();
+		if (m_message.m_body == "Hello...") deliver(message("...World!"));
+
 		m_message.reset();
 		wait_for_msg();											// wait for data from heres
+		wait_for_database_login();
 
 	} else {
 

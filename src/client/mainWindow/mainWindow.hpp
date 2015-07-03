@@ -25,8 +25,8 @@ public:
 protected:
 
 	// shared objects
-	boost::shared_ptr<clientSettings> 		m_settings	;	// the application settings
-	boost::shared_ptr<scrolledLogWindow> 	m_logger	;	// the logger object
+	clientSettings 		m_settings	;						// the application settings
+	scrolledLogWindow 	m_logger	;						// the logger object
 
 	Gtk::Paned 		* m_paned	;							// the main window paned
 	Gtk::VBox 	 	* m_mainBox	;							// the main box

@@ -7,8 +7,8 @@
 
 #include <client/mainWindow/controlBox/controlBox.hpp>
 
-controlBox::controlBox(	boost::shared_ptr<clientSettings> 		settings,
-						boost::shared_ptr<scrolledLogWindow> 	logger	,
+controlBox::controlBox(	clientSettings& 	settings,
+						scrolledLogWindow& 	logger	,
 						int width, int height)
 	: m_settings(settings), m_logger(logger) {
 
@@ -91,20 +91,20 @@ controlBox::controlBox(	boost::shared_ptr<clientSettings> 		settings,
 
 void controlBox::fillFromSettings() {
 
-	m_serverIp_entry	->entry().set_text(m_settings->server_ip			());
-	m_serverPort_entry	->entry().set_text(m_settings->server_port			());
-	m_dbIp_entry		->entry().set_text(m_settings->sql_login().ip		());
-	m_dbPort_entry		->entry().set_text(m_settings->sql_login().port		());
-	m_dbUser_entry		->entry().set_text(m_settings->sql_login().user		());
-	m_dbPwd_entry		->entry().set_text(m_settings->sql_login().pwd		());
-	m_dbSchema_entry	->entry().set_text(m_settings->sql_login().schema	());
+	m_serverIp_entry	->entry().set_text(m_settings.server_ip			());
+	m_serverPort_entry	->entry().set_text(m_settings.server_port			());
+	m_dbIp_entry		->entry().set_text(m_settings.sql_login().ip		());
+	m_dbPort_entry		->entry().set_text(m_settings.sql_login().port		());
+	m_dbUser_entry		->entry().set_text(m_settings.sql_login().user		());
+	m_dbPwd_entry		->entry().set_text(m_settings.sql_login().pwd		());
+	m_dbSchema_entry	->entry().set_text(m_settings.sql_login().schema	());
 
 }
 
 bool controlBox::on_serverIp_focus_out (GdkEventFocus* event) {
 
 	std::string s = m_serverIp_entry->entry().get_text();
-	if (s != "") m_settings->server_ip(s);
+	if (s != "") m_settings.server_ip(s);
 	return true;
 
 }
@@ -112,7 +112,7 @@ bool controlBox::on_serverIp_focus_out (GdkEventFocus* event) {
 bool controlBox::on_serverPort_focus_out (GdkEventFocus* event) {
 
 	std::string s = m_serverPort_entry->entry().get_text();
-	if (s != "") m_settings->server_port(s);
+	if (s != "") m_settings.server_port(s);
 	return true;
 
 }
@@ -120,7 +120,7 @@ bool controlBox::on_serverPort_focus_out (GdkEventFocus* event) {
 bool controlBox::on_dbIp_focus_out (GdkEventFocus* event) {
 
 	std::string s = m_dbIp_entry->entry().get_text();
-	if (s != "") m_settings->sql_login().ip(s);
+	if (s != "") m_settings.sql_login().ip(s);
 	return true;
 
 }
@@ -128,7 +128,7 @@ bool controlBox::on_dbIp_focus_out (GdkEventFocus* event) {
 bool controlBox::on_dbPort_focus_out (GdkEventFocus* event) {
 
 	std::string s = m_dbPort_entry->entry().get_text();
-	if (s != "") m_settings->sql_login().port(s);
+	if (s != "") m_settings.sql_login().port(s);
 	return true;
 
 }
@@ -136,7 +136,7 @@ bool controlBox::on_dbPort_focus_out (GdkEventFocus* event) {
 bool controlBox::on_dbUser_focus_out (GdkEventFocus* event) {
 
 	std::string s = m_dbUser_entry->entry().get_text();
-	if (s != "") m_settings->sql_login().user(s);
+	if (s != "") m_settings.sql_login().user(s);
 	return true;
 
 }
@@ -144,7 +144,7 @@ bool controlBox::on_dbUser_focus_out (GdkEventFocus* event) {
 bool controlBox::on_dbPwd_focus_out (GdkEventFocus* event) {
 
 	std::string s = m_dbPwd_entry->entry().get_text();
-	if (s != "") m_settings->db_pwd(s);
+	if (s != "") m_settings.db_pwd(s);
 	return true;
 
 }
@@ -152,7 +152,7 @@ bool controlBox::on_dbPwd_focus_out (GdkEventFocus* event) {
 bool controlBox::on_dbSchema_focus_out (GdkEventFocus* event) {
 
 	std::string s = m_dbSchema_entry->entry().get_text();
-	if (s != "") m_settings->sql_login().schema(s);
+	if (s != "") m_settings.sql_login().schema(s);
 	return true;
 
 }

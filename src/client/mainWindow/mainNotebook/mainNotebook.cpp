@@ -8,8 +8,8 @@
 #include "mainNotebook.hpp"
 
 mainNotebook::mainNotebook(
-	boost::shared_ptr<clientSettings> settings	,
-	boost::shared_ptr<scrolledLogWindow> logger	,
+	clientSettings& settings	,
+	scrolledLogWindow& logger	,
 	int height, int width						)
 
 	: m_settings(settings	),

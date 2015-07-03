@@ -8,8 +8,6 @@
 #ifndef CONTROLBOX_HPP_
 #define CONTROLBOX_HPP_
 
-#include <regex>								// stl regex
-
 #include <boost/shared_ptr.hpp>
 
 #include <gtkmm.h>
@@ -22,7 +20,7 @@ class controlBox: public Gtk::HBox {
 
 public:
 
-	controlBox(boost::shared_ptr<clientSettings>, boost::shared_ptr<scrolledLogWindow> logger, int, int);
+	controlBox(clientSettings&, scrolledLogWindow& logger, int, int);
 	virtual ~controlBox() {};
 
 protected:
@@ -36,8 +34,8 @@ protected:
 	bool on_dbSchema_focus_out	(GdkEventFocus*);
 
 	// the shared objects
-	boost::shared_ptr<clientSettings> 		m_settings	;
-	boost::shared_ptr<scrolledLogWindow> 	m_logger	;
+	clientSettings& 		m_settings	;
+	scrolledLogWindow& 	m_logger	;
 
 	// Gtk components
 	Gtk::HBox * m_boxMain;								// the main box

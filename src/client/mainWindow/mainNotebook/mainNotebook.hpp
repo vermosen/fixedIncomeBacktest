@@ -19,8 +19,8 @@ class mainNotebook : public Gtk::Notebook {
 
 public:
 	mainNotebook(
-		boost::shared_ptr<clientSettings>,
-		boost::shared_ptr<scrolledLogWindow>,
+		clientSettings&,
+		scrolledLogWindow&,
 		int, int);
 
 	virtual ~mainNotebook();
@@ -28,8 +28,8 @@ public:
 protected:
 
 	// shared objects
-	boost::shared_ptr<clientSettings> 		m_settings	;	// the application settings
-	boost::shared_ptr<scrolledLogWindow> 	m_logger	;	// the logger object
+	scrolledLogWindow& 	m_logger	;						// the logger object
+	clientSettings& 	m_settings	;						// the application settings
 
 	Gtk::Label * m_label1, * m_label2,						// notebook labels
 			   * m_label3, * m_label4;

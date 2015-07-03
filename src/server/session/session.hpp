@@ -38,12 +38,7 @@ public:
 
 	// factory
 	static boost::shared_ptr<session> create(
-		boost::shared_ptr<tcpConnection> connection_, tcpServer & server_) {
-		boost::shared_ptr<session> m_session(new session(connection_, server_));
-		m_session->wait_for_database_login();
-		return m_session;
-
-	}
+		boost::shared_ptr<tcpConnection> connection_, tcpServer & server_);
 
 	void deliver(const message & msg);				// delivers a log message
 

@@ -7,11 +7,12 @@
 
 #include <client/mainWindow/mainWindow.hpp>
 
-mainWindow::mainWindow(int height, int width) : m_height(height), m_width(width) {
-
-	// the shared references
-	m_settings = boost::shared_ptr<clientSettings>	(new clientSettings							   ());
-	m_logger = boost::shared_ptr<scrolledLogWindow>	(new scrolledLogWindow ("Applications messages"	));
+mainWindow::mainWindow(int height, int width)
+	: m_settings	()							,
+	  m_logger		("Applications messages")	,
+	  m_height		(height)					,
+	  m_width		(width)
+{
 
 	// main objects
 	m_paned 		= Gtk::manage(new Gtk::Paned	(Gtk::ORIENTATION_VERTICAL				));
@@ -45,7 +46,7 @@ mainWindow::mainWindow(int height, int width) : m_height(height), m_width(width)
 
 	// the paned component
 	m_paned->add			(*m_notebook);				// create the frame on top
-	m_paned->add			(*m_logger	);				// create the log list
+	m_paned->add			(m_logger	);				// create the log list
 	m_paned->set_position	(1000		);
 
 	Gtk::Window::show_all_children(true);				// show all the elements
@@ -54,7 +55,7 @@ mainWindow::mainWindow(int height, int width) : m_height(height), m_width(width)
 
 void mainWindow::on_log(const Glib::ustring & message) {
 
-	m_logger->append(message);
+	m_logger.append(message);
 
 }
 
