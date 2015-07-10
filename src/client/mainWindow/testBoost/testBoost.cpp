@@ -34,7 +34,6 @@ testBoost::testBoost(clientSettings& settings,
 	pack_start(*m_disconnectButton	, false, false);
 
 	//boost::asio::deadline_timer t(m_ios, boost::posix_time::seconds(1));			// timer...
-
 	m_client = tcpClient::create(m_ios, m_logger);
 
 }
@@ -57,7 +56,6 @@ void testBoost::on_connectButton_clicked() {
 		m_logger.append("error: " + std::string(e.what()));
 
 	}
-
 }
 
 void testBoost::on_messageButton_clicked() {
@@ -101,6 +99,8 @@ void testBoost::on_disconnectButton_clicked() {
 
 	try {
 
+		m_client->disconnect();
+		m_logger.append("connection closed");
 
 	} catch (std::exception& e) {
 

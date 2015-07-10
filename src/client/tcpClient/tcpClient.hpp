@@ -27,16 +27,24 @@ public:
 	static boost::shared_ptr<tcpClient> create(						// factory
 		boost::asio::io_service&, scrolledLogWindow&);
 
-	void connect(boost::asio::ip::tcp::endpoint&);
+	void connect	(boost::asio::ip::tcp::endpoint&);				// connect to the endpoint
+	void disconnect	();
 
 	void deliver(const message&	);									// the deliver methods
 	//void deliver(const sqlLogin&);
 
 private:
 
-	void threadAction() {
-	    m_ios.run();
+	// thread management
+	void add_service(boost::asio::io_service & ios) {
+		boost::asio::io_service::work work(ios);
 	}
+
+	void join_services() {
+		m_threads.join_all();
+	}
+
+	void check_deadline();											// check the deadline
 
 	// callbacks
 	void handle_connect			(const boost::system::error_code& error);
@@ -44,16 +52,19 @@ private:
 	void handle_write_message	(const boost::system::error_code& error);
 	//void handle_write_sql_login	(const boost::system::error_code& error);
 
+
+
 	void read_message();
 
 	bool	m_closing	;											// is closing ?
 	bool	m_connected	;											// is connected ?
 
-	boost::asio::io_service&			m_ios		;				// asio components
-	boost::asio::deadline_timer 		m_timer		;
+	boost::asio::io_service&			m_ios		;				// io_service
+	boost::asio::io_service::work		m_work		;				// prevent the io_service to stop
+	boost::asio::deadline_timer 		m_deadline	;				// deadline timer
 
 	boost::shared_ptr<tcpConnection> 	m_connection;				// shared objects
-	boost::shared_ptr<boost::thread>	m_thread	;
+	boost::thread_group					m_threads	;				// a (pool of) threads to capture the io_service.run()
 
 	scrolledLogWindow& m_scroll;
 

@@ -50,7 +50,7 @@ private:
 
 	void handle_read_msg		(const boost::system::error_code & error);
 	void handle_write_msg		(const boost::system::error_code & error);
-	//void handle_sql_identifier	(const boost::system::error_code & error);
+	//void handle_write_sql_identifier	(const boost::system::error_code & error);
 
 	void databaseConnect();
 	void databaseRequest();

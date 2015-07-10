@@ -34,8 +34,8 @@ protected:
 	void on_disconnectButton_clicked();
 
 	// shared components
-	scrolledLogWindow& 	m_logger	;						// logger
 	clientSettings& 	m_settings	;						// settings
+	scrolledLogWindow& 	m_logger	;						// logger
 
 	boost::asio::io_service					m_ios		;	// asio components
 	boost::asio::io_service::work 			m_work		;

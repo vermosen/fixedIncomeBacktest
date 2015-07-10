@@ -14,8 +14,6 @@ boost::shared_ptr<session> session::create(
 	boost::shared_ptr<session> m_session(new session(connection, server));
 
 	m_session->deliver(message("session created"));
-	m_session->wait_for_msg();
-	//m_session->wait_for_database_login();
 
 	return m_session;
 
@@ -83,24 +81,22 @@ void session::handle_read_msg(const boost::system::error_code & error) {
 
 	} else {
 
-		std::cout
-			<< error
-			<< std::endl;
+		// getting disconnected ?
+		if (error == boost::asio::error::eof) {
 
+			//wait_for_msg();
 
-		if (error.value() == boost::asio::error::eof) {
+		} else if (error == boost::asio::error::connection_reset) {
 
-			// should send an error message: connection already opened
+			is_leaving = true;
+			//m_server.terminate(shared_from_this());			// call the destructor
 
 		} else {
 
-			if (!is_leaving) {
+			std::cout											// TODO: log
+				<< error
+				<< std::endl;
 
-				is_leaving = true;
-				// TODO: close the session
-				// by calling an appropriate method from the server
-
-			}
 		}
 	}
 }

@@ -24,27 +24,68 @@ tcpClient::tcpClient(
 	: m_closing		(false),
 	  m_connected	(false),
 	  m_ios			(ios),
-	  m_timer		(m_ios, boost::posix_time::seconds(1)),
-	  m_scroll		(scroll) {}
+	  m_work		(ios),
+	  m_deadline	(ios),
+	  m_scroll		(scroll) {
+
+	m_threads.create_thread(boost::bind(&boost::asio::io_service::run, boost::ref(m_ios)));
+
+}
 
 void tcpClient::connect(boost::asio::ip::tcp::endpoint& endpoint) {
 
-	m_connection = boost::shared_ptr<tcpConnection>(new tcpConnection(m_ios));
+	if (!m_connected) {
 
-	m_thread = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&tcpClient::threadAction, this)));
+		// create the connection object
+		m_connection = boost::shared_ptr<tcpConnection>(new tcpConnection(m_ios));
 
-	m_connection->socket().async_connect(endpoint,
-		boost::bind(&tcpClient::handle_connect,
-		this, boost::asio::placeholders::error));
+		// start the timer
+		m_deadline.expires_from_now(boost::posix_time::seconds(5));
 
+		m_connection->socket().async_connect(endpoint,
+			boost::bind(&tcpClient::handle_connect,
+			this, boost::asio::placeholders::error));
+
+		m_deadline.async_wait(boost::bind(&tcpClient::check_deadline, this));
+
+	} else {
+
+		throw std::logic_error("client already connected");
+
+	}
+}
+
+void tcpClient::disconnect() {
+
+	if (m_connected) {
+
+		m_closing = true;
+		m_connection->socket().close();
+		m_connection.reset();
+		m_connected = false;
+		m_closing   = false;
+
+	} else {
+
+		throw std::logic_error("no connection set");
+
+	}
 }
 
 void tcpClient::deliver(const message& msg) {
 
-	m_connection->async_write(msg,
-		boost::bind(&tcpClient::handle_write_message,
-		shared_from_this(),
-		boost::asio::placeholders::error));
+	if (m_connected) {
+
+		m_connection->async_write(msg,
+			boost::bind(&tcpClient::handle_write_message,
+			shared_from_this(),
+			boost::asio::placeholders::error));
+
+	} else {
+
+		throw std::logic_error("no connection set");
+
+	}
 
 };
 
@@ -71,17 +112,16 @@ void tcpClient::read_message() {							// wait for incoming message
 
 void tcpClient::handle_connect(const boost::system::error_code & error) {
 
-	if (m_closing) return;
-
-	if(!error) {
+	if(!error && !m_closing) {
 
 		m_connected = true;
-		m_scroll.append("connection to the server was successfull");
-		//read_message();
+		m_scroll.append("connection to the server was successful");
+		read_message();										// wait for new message
 
 	} else {
 
-		std::cout << error << std::endl;
+		m_scroll.append("failed to connect to the server: ");
+		m_scroll.append(error.message());
 
 	}
 
@@ -92,6 +132,11 @@ void tcpClient::handle_read_message(const boost::system::error_code & error) {
 
 		m_scroll.append("server replied: " + m_message.m_body);
 
+	} else {
+
+		m_scroll.append("an error message has been sent by the server: ");
+		m_scroll.append(error.message());
+
 	}
 };
 
@@ -99,13 +144,30 @@ void tcpClient::handle_write_message(const boost::system::error_code & error) {
 
 	if (!error && !m_closing) {
 
-		//m_connection->async_write(m_message,
-		//	boost::bind(&tcpClient::handle_write_message,
-		//		shared_from_this(),
-		//		boost::asio::placeholders::error));
+//		m_connection->async_write(m_message,
+//			boost::bind(&tcpClient::handle_write_message,
+//				shared_from_this(),
+//				boost::asio::placeholders::error));
 
 	}
 };
+
+void tcpClient::check_deadline() {
+
+	if (m_connected && !m_closing) {
+
+		if (m_deadline.expires_at() <= boost::asio::deadline_timer::traits_type::now()) {
+
+			m_connection->socket().close();
+			m_deadline.expires_at(boost::posix_time::pos_infin);
+
+		}
+
+		// put the deadline back to sleep
+		m_deadline.async_wait(boost::bind(&tcpClient::check_deadline, this));
+
+	}
+}
 
 //void tcpClient::handle_write_sql_login(const boost::system::error_code& error) {
 //
