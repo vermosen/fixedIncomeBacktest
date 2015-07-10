@@ -13,6 +13,7 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/thread.hpp>
 
 #include <shared/tcpConnection/tcpConnection.hpp>
 #include <shared/sqlLogin/sqlLogin.hpp>
@@ -22,19 +23,26 @@
 class tcpClient : public boost::enable_shared_from_this<tcpClient> {
 
 public:
-	tcpClient(boost::asio::io_service&, scrolledLogWindow&);
+
+	static boost::shared_ptr<tcpClient> create(						// factory
+		boost::asio::io_service&, scrolledLogWindow&);
 
 	void connect(boost::asio::ip::tcp::endpoint&);
 
 	void deliver(const message&	);									// the deliver methods
-	void deliver(const sqlLogin&);
+	//void deliver(const sqlLogin&);
 
 private:
+
+	void threadAction() {
+	    m_ios.run();
+	}
+
 	// callbacks
 	void handle_connect			(const boost::system::error_code& error);
 	void handle_read_message	(const boost::system::error_code& error);
 	void handle_write_message	(const boost::system::error_code& error);
-	void handle_write_sql_login	(const boost::system::error_code& error);
+	//void handle_write_sql_login	(const boost::system::error_code& error);
 
 	void read_message();
 
@@ -45,11 +53,14 @@ private:
 	boost::asio::deadline_timer 		m_timer		;
 
 	boost::shared_ptr<tcpConnection> 	m_connection;				// shared objects
+	boost::shared_ptr<boost::thread>	m_thread	;
 
 	scrolledLogWindow& m_scroll;
 
 	message								m_message	;				// message i/o
-	sqlLogin							m_sqlLogin	;
+	//sqlLogin							m_sqlLogin	;
+
+	tcpClient(boost::asio::io_service&, scrolledLogWindow&);
 
 };
 #endif /* TCPCLIENT_HPP_ */

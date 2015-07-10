@@ -38,8 +38,8 @@ protected:
 	clientSettings& 	m_settings	;						// settings
 
 	boost::asio::io_service					m_ios		;	// asio components
+	boost::asio::io_service::work 			m_work		;
 	boost::shared_ptr<tcpClient> 			m_client	;
-	boost::shared_ptr<boost::thread> 		m_thread	;
 
 	// Gtk components
 	Gtk::Button * m_connectButton	;						// connect to the server

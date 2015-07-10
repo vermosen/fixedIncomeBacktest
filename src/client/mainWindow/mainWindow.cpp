@@ -33,8 +33,8 @@ mainWindow::mainWindow(int height, int width)
 	m_progressBox->add(* m_progressLabel);
 	m_progressBox->add(* m_progressBar);
 
-	m_progressBar->set_hexpand(false);
-	m_progressBar->set_text("");
+	m_progressBar->set_hexpand	(false);
+	m_progressBar->set_text		("");
 	m_progressBar->set_show_text();
 
 	// the main VBox

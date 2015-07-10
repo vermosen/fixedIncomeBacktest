@@ -19,18 +19,24 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 
+// activate/inactivate strand
+#define STRAND
+//#undef STRAND
+
 using boost::asio::ip::tcp;
 
-class tcpConnection : public  boost::enable_shared_from_this<tcpConnection>,
-					  private boost::noncopyable {
+// class tcpConnection - the use of boost::tuple
+// is a workaround to a limitation of boost::bind
+// when it is used together with templates
+class tcpConnection {
 
 public:
 
-	static boost::shared_ptr<tcpConnection> create(boost::asio::io_service& ios) {
-
-		return boost::shared_ptr<tcpConnection>(new tcpConnection(ios));
-
-	}
+	tcpConnection(boost::asio::io_service& io_service) : m_socket(io_service)
+		#ifdef STRAND
+		,m_strand(io_service)
+		#endif /* STRAND */
+	{}
 
 	tcp::socket& socket() { return m_socket; }
 
@@ -55,7 +61,13 @@ public:
 
 			// error on the message size
 			boost::system::error_code error(boost::asio::error::invalid_argument);
+
+			#ifdef STRAND
 			m_socket.get_io_service().post(m_strand.wrap(boost::bind(handler, error)));
+			#else
+			m_socket.get_io_service().post(boost::bind(handler, error));
+			#endif /* STRAND */
+
 			return;
 
 		}
@@ -64,7 +76,12 @@ public:
 		std::vector<boost::asio::const_buffer> buffers;					// write the data on the socket
 		buffers.push_back(boost::asio::buffer(m_outbound_header));
 		buffers.push_back(boost::asio::buffer(m_outbound_data));
+
+		#ifdef STRAND
 		boost::asio::async_write(m_socket, buffers, m_strand.wrap(handler));
+		#else
+		boost::asio::async_write(m_socket, buffers, handler);
+		#endif /* STRAND */
 	}
 
 	template <typename T, typename Handler>								// reading asynchroneously from the socket
@@ -73,18 +90,26 @@ public:
 		void (tcpConnection::*f)(const boost::system::error_code&, T&, boost::tuple<Handler>)
 			= &tcpConnection::handle_read_header<T, Handler>;			// get the socket
 
+		#ifdef STRAND
 		boost::asio::async_read(
 			m_socket, boost::asio::buffer(m_inbound_header), m_strand.wrap(
 			boost::bind(
-				f, shared_from_this(), boost::asio::placeholders::error, boost::ref(t),
+				f, this, boost::asio::placeholders::error, boost::ref(t),
 				boost::make_tuple(handler))));
-
+		#else
+		boost::asio::async_read(
+			m_socket, boost::asio::buffer(m_inbound_header),
+			boost::bind(
+				f, this, boost::asio::placeholders::error, boost::ref(t),
+				boost::make_tuple(handler)));
+		#endif
+		// STRAND
 	}
 
 	template <typename T, typename Handler>								// read the header
 	void handle_read_header(
 		const boost::system::error_code& e,
-		T& t, boost::tuple<Handler> handler) {							// why a tuple ?
+		T& t, boost::tuple<Handler> handler) {
 
 		if (e) {
 
@@ -108,13 +133,19 @@ public:
 			void (tcpConnection::*f)(const boost::system::error_code&, T&, boost::tuple<Handler>)
 				= &tcpConnection::handle_read_data<T, Handler>;
 
+			#ifdef STRAND
 			boost::asio::async_read(m_socket, boost::asio::buffer(m_inbound_data), m_strand.wrap(
-				boost::bind(f, shared_from_this(),
+				boost::bind(f, this,
 				boost::asio::placeholders::error, boost::ref(t), handler)));
+			#else
+			boost::asio::async_read(m_socket, boost::asio::buffer(m_inbound_data),
+				boost::bind(f, this,
+				boost::asio::placeholders::error, boost::ref(t), handler));
+			#endif /* STRAND */
 		}
 	}
 
-	template <typename T, typename Handler>								// deserialize the data
+	template <typename T, typename Handler>								// on error, write the archive
 	void handle_read_data(
 		const boost::system::error_code& e,
 		T& t, boost::tuple<Handler> handler) {
@@ -140,25 +171,25 @@ public:
 
 			}
 
-			boost::get<0>(handler)(e);									// inform caller of the success
+			boost::get<0>(handler)(e);									// inform caller of the failure
 		}
 	}
 
 
 private:
 
-	tcpConnection(boost::asio::io_service& io_service) : m_socket(io_service), m_strand(io_service) {}
-
-	enum { header_length = 8 }; 						// header size
+	enum { header_length = 8 }; 										// header size
 
 	// members
-	tcp::socket 		m_socket;						// the socket
-	std::string 		m_outbound_header;
-	std::string 		m_outbound_data;
-	char 				m_inbound_header[header_length];
-	std::vector<char> 	m_inbound_data;
+	tcp::socket 		m_socket						;				// the socket
+	std::string 		m_outbound_header				;				// outbound header
+	std::string 		m_outbound_data					;				// outbound data
+	char 				m_inbound_header[header_length]	;				// inbound header
+	std::vector<char> 	m_inbound_data					;				// inbound data
 
-	boost::asio::io_service::strand	m_strand;			// strand object
+	#ifdef STRAND
+	boost::asio::io_service::strand	m_strand;							// strand object
+	#endif
 
 };
 

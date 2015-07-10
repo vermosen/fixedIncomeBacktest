@@ -8,15 +8,24 @@
 #include <server/session/session.hpp>
 
 boost::shared_ptr<session> session::create(
-	boost::shared_ptr<tcpConnection> connection_,
-	tcpServer & server_) {
+	boost::shared_ptr<tcpConnection> connection,
+	tcpServer & server) {
 
-	boost::shared_ptr<session> m_session(new session(connection_, server_));
+	boost::shared_ptr<session> m_session(new session(connection, server));
 
+	m_session->deliver(message("session created"));
 	m_session->wait_for_msg();
 	//m_session->wait_for_database_login();
 
 	return m_session;
+
+}
+
+session::session(boost::shared_ptr<tcpConnection> connection_, tcpServer & server_)
+	: m_connection	(connection_),
+	  m_server		(server_	) {
+
+	is_leaving = false;
 
 }
 
@@ -30,36 +39,32 @@ void session::deliver(const message& msg) {
 
 }
 
-session::session(boost::shared_ptr<tcpConnection> connection_, tcpServer & server_)
-	: m_connection	(connection_),
-	  m_server		(server_	) {
-
-	is_leaving = false;
-
-}
-
-void session::wait_for_database_login() {
-
-	m_connection->async_read(
-		m_dbLogin,
-		boost::bind(
-			&session::handle_sql_identifier,
-			shared_from_this(),
-			boost::asio::placeholders::error));
-
-}
+//void session::wait_for_database_login() {
+//
+//	m_connection->async_read(
+//		m_dbLogin,
+//		boost::bind(
+//			&session::handle_sql_identifier,
+//			shared_from_this(),
+//			boost::asio::placeholders::error));
+//
+//}
 
 void session::wait_for_msg() {									// wait for incoming message
 
-	m_connection->async_read(									// wait for data
-		m_message,
-		boost::bind(
-			&session::handle_read_msg,
-			shared_from_this(),
-			boost::asio::placeholders::error));
+	if (! is_leaving){
+
+		m_connection->async_read(									// wait for data
+			m_message,
+			boost::bind(
+				&session::handle_read_msg,
+				shared_from_this(),
+				boost::asio::placeholders::error));
+
+	}
 }
 
-void session::handle_read_msg(const boost::system::error_code &error) {
+void session::handle_read_msg(const boost::system::error_code & error) {
 
 	if (!error) {
 
@@ -74,7 +79,7 @@ void session::handle_read_msg(const boost::system::error_code &error) {
 
 		m_message.reset();
 		wait_for_msg();											// wait for data from heres
-		wait_for_database_login();
+		//wait_for_database_login();
 
 	} else {
 
@@ -82,11 +87,20 @@ void session::handle_read_msg(const boost::system::error_code &error) {
 			<< error
 			<< std::endl;
 
-		if (!is_leaving) {
 
-			is_leaving = true;
-			// close the session
+		if (error.value() == boost::asio::error::eof) {
 
+			// should send an error message: connection already opened
+
+		} else {
+
+			if (!is_leaving) {
+
+				is_leaving = true;
+				// TODO: close the session
+				// by calling an appropriate method from the server
+
+			}
 		}
 	}
 }
@@ -100,19 +114,19 @@ void session::handle_write_msg(const boost::system::error_code & error) {
 	}
 }
 
-void session::handle_sql_identifier(const boost::system::error_code& error) {
-
-	if (error && (!is_leaving) ) {
-
-		is_leaving = true;										// close the session
-
-
-	} else {
-
-		wait_for_msg();
-
-	}
-}
+//void session::handle_sql_identifier(const boost::system::error_code & error) {
+//
+//	if (error && (!is_leaving) ) {
+//
+//		is_leaving = true;										// close the session
+//
+//
+//	} else {
+//
+//		wait_for_msg();
+//
+//	}
+//}
 
 void session::databaseConnect() {
 
@@ -165,7 +179,7 @@ void session::databaseRequest() {
 		while (res->next())
 			names.push_back(res->getString("instrument_isin"));
 
-		for (auto It = names.cbegin(); It != names.cend(); It++) {
+		for (auto It = names.begin(); It != names.end(); It++) {
 
 			deliver(message("instrument: " + *It));
 

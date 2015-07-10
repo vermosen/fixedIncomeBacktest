@@ -9,6 +9,8 @@
 #include <boost/lexical_cast.hpp>
 
 #include <boost/asio.hpp>
+#include <boost/bind.hpp>
+#include <boost/thread.hpp>
 
 #include <server/tcpServer/tcpServer.hpp>
 
@@ -20,6 +22,7 @@ int main(int argc, char** argv) {
 
 		// create the tcp server
 		tcpServer server(io_service, 7171);
+
 		io_service.run();
 
 	} catch (std::exception & e) {

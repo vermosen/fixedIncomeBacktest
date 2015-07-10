@@ -9,7 +9,7 @@
 
 testBoost::testBoost(clientSettings& settings,
 					 scrolledLogWindow& logger	)
-	: m_ios(), m_logger(logger), m_settings(settings) {
+	: m_ios(), m_logger(logger), m_settings(settings), m_work(m_ios) {
 
 	m_connectButton 	= Gtk::manage(new Gtk::Button("connect to the server"			));
 	m_messageButton 	= Gtk::manage(new Gtk::Button("send a message to the server"	));
@@ -34,13 +34,8 @@ testBoost::testBoost(clientSettings& settings,
 	pack_start(*m_disconnectButton	, false, false);
 
 	//boost::asio::deadline_timer t(m_ios, boost::posix_time::seconds(1));			// timer...
-	m_client = boost::shared_ptr<tcpClient>(										// create the tcp client
-		new tcpClient(m_ios, m_logger));
 
-	m_thread = boost::shared_ptr<boost::thread>(									// launch io_service.run()
-		new boost::thread(boost::bind(
-			&boost::asio::io_service::run,
-			boost::ref(m_ios))));
+	m_client = tcpClient::create(m_ios, m_logger);
 
 }
 
@@ -62,6 +57,7 @@ void testBoost::on_connectButton_clicked() {
 		m_logger.append("error: " + std::string(e.what()));
 
 	}
+
 }
 
 void testBoost::on_messageButton_clicked() {
@@ -90,7 +86,7 @@ void testBoost::on_databaseButton_clicked() {
 
 	try {
 
-		m_client->deliver(m_settings.sql_login());
+		//m_client->deliver(m_settings.sql_login());
 
 	} catch (std::exception& e) {
 
